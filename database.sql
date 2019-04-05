@@ -25,6 +25,7 @@ ALTER TABLE `zhwiki_bulletin_message`
   ADD PRIMARY KEY (`mid`);
 
 ALTER TABLE `zhwiki_bulletin_record`
+  ADD PRIMARY KEY (`chat_id`,`message_id`),
   ADD KEY `mid` (`mid`);
 
 

@@ -31,6 +31,7 @@ db = pymysql.connect(host=cfg['database']['host'],
                      db=cfg['database']['db'],
                      charset=cfg['database']['charset'])
 cur = db.cursor()
+
 cur.execute(
     """SELECT `mid`, `html` FROM `{0}message`""".format(cfg['database']['table_prefix']))
 rows = cur.fetchall()
@@ -38,6 +39,13 @@ old_message = {}
 for row in rows:
     old_message[row[1]] = row[0]
 print(old_message)
+
+cur.execute(
+    """SELECT `mid`, `chat_id` FROM `{0}record`""".format(cfg['database']['table_prefix']))
+rows = cur.fetchall()
+old_record = set()
+for row in rows:
+    old_record.add((row[0], row[1]))
 
 for li in soup.find_all('li'):
     btype = li.find('span', class_='bulletin-type').text
@@ -61,17 +69,19 @@ for li in soup.find_all('li'):
         print(message)
 
         if message in old_message:
-            del old_message[message]
-            continue
-
-        res = cur.execute(
-            """INSERT INTO `{0}message` (`html`) VALUES (%s)""".format(
-                cfg['database']['table_prefix']),
-            (message))
-        db.commit()
-        mid = cur.lastrowid
+            mid = old_message[message]
+        else:
+            res = cur.execute(
+                """INSERT INTO `{0}message` (`html`) VALUES (%s)""".format(
+                    cfg['database']['table_prefix']),
+                (message))
+            db.commit()
+            mid = cur.lastrowid
 
         for chat_id in cfg['telegram']['chats']:
+            if (mid, chat_id) in old_record:
+                continue
+
             chat = cfg['telegram']['chats'][chat_id]
 
             send_text = chat['new'].format(message)
@@ -107,6 +117,9 @@ for li in soup.find_all('li'):
                     cfg['database']['table_prefix']),
                 (mid, chat_id, message_id))
             db.commit()
+
+        if message in old_message:
+            del old_message[message]
 
 for message in old_message:
     mid = old_message[message]
