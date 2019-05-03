@@ -18,8 +18,14 @@ def clean_html(dirty_html):
     return dirty_html
 
 
-req = requests.get(cfg['url'])
+try:
+    req = requests.get(cfg['url'])
+except Exception as e:
+    print(e)
+    exit()
 page_html = req.text
+if 'bulletin-type' not in page_html:
+    exit('Not Bulletin page')
 
 bot = telegram.Bot(cfg['telegram']['token'])
 
