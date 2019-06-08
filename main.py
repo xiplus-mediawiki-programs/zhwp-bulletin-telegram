@@ -1,4 +1,6 @@
+import argparse
 import html
+import random
 import re
 import time
 
@@ -7,8 +9,13 @@ import pymysql
 import requests
 import telegram
 from bs4 import BeautifulSoup
-
 from config import cfg
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--dry-run', action='store_true')
+args = parser.parse_args()
+print(args)
+dry_run = args.dry_run
 
 
 def clean_html(dirty_html):
@@ -93,27 +100,31 @@ for li in soup.find_all('li'):
             send_text = chat['new'].format(message)
 
             message_id = None
-            for i in range(5):
-                try:
-                    print('send to {}'.format(chat_id))
-                    sent_message = bot.send_message(
-                        chat_id=chat_id,
-                        text=send_text,
-                        parse_mode=telegram.ParseMode.HTML,
-                        disable_web_page_preview=True)
-                    message_id = sent_message.message_id
-                    break
-                except telegram.error.TimedOut as e:
-                    print('send to {} failed: TimedOut: {}'.format(
-                        chat_id, e))
-                    time.sleep(1)
-                except telegram.error.BadRequest as e:
-                    print('send to {} failed: BadRequest: {}'.format(
-                        chat_id, e))
-                    break
-                except Exception as e:
-                    print('send to {} failed: {}'.format(
-                        chat_id, e))
+
+            if dry_run:
+                message_id = random.randint(-999999, -1)
+            else:
+                for i in range(5):
+                    try:
+                        print('send to {}'.format(chat_id))
+                        sent_message = bot.send_message(
+                            chat_id=chat_id,
+                            text=send_text,
+                            parse_mode=telegram.ParseMode.HTML,
+                            disable_web_page_preview=True)
+                        message_id = sent_message.message_id
+                        break
+                    except telegram.error.TimedOut as e:
+                        print('send to {} failed: TimedOut: {}'.format(
+                            chat_id, e))
+                        time.sleep(1)
+                    except telegram.error.BadRequest as e:
+                        print('send to {} failed: BadRequest: {}'.format(
+                            chat_id, e))
+                        break
+                    except Exception as e:
+                        print('send to {} failed: {}'.format(
+                            chat_id, e))
 
             if message_id is None:
                 continue
@@ -138,6 +149,9 @@ for message in old_message:
     for row in rows:
         chat_id = row[0]
         message_id = row[1]
+
+        if message_id < 0:
+            continue
 
         if chat_id not in cfg['telegram']['chats']:
             continue
