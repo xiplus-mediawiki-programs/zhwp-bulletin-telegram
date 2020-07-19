@@ -3,12 +3,16 @@ import html
 import random
 import re
 import time
+import urllib.parse
 
 import bleach
 import pymysql
 import requests
 import telegram
+from bleach.html5lib_shim import Filter
+from bleach.sanitizer import Cleaner
 from bs4 import BeautifulSoup
+
 from config import cfg
 
 parser = argparse.ArgumentParser()
@@ -18,11 +22,28 @@ print(args)
 dry_run = args.dry_run
 
 
+class LinkFilter(Filter):
+    def __iter__(self):
+        for token in Filter.__iter__(self):
+            if token['type'] in ['StartTag', 'EmptyTag'] and token['data']:
+                for attr, value in token['data'].items():
+                    if attr[1] == 'href':
+                        href = token['data'][attr]
+
+                        if href.startswith('//'):
+                            href = 'https:' + href
+                        href = urllib.parse.unquote(href)
+                        href = re.sub('"', '%22', href)
+
+                        token['data'][attr] = href
+            yield token
+
+
+cleaner = Cleaner(tags=['a'], attributes={'a': ['href']}, filters=[LinkFilter], strip=True)
+
+
 def clean_html(dirty_html):
-    dirty_html = bleach.clean(str(dirty_html), tags=['a'], strip=True)
-    dirty_html = re.sub(r'(<a href="[^"]+?")(?:.+?)>', r'\1>', dirty_html)
-    dirty_html = re.sub(r'href="//', 'href="https://', dirty_html)
-    return dirty_html
+    return cleaner.clean(str(dirty_html))
 
 
 try:
