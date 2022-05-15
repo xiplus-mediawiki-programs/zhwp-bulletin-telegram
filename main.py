@@ -39,7 +39,7 @@ class LinkFilter(Filter):
             yield token
 
 
-cleaner = Cleaner(tags=['a'], attributes={'a': ['href']}, filters=[LinkFilter], strip=True)
+cleaner = Cleaner(tags=['a', 'b'], attributes={'a': ['href']}, filters=[LinkFilter], strip=True)
 
 
 def clean_html(dirty_html):
