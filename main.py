@@ -33,7 +33,7 @@ class LinkFilter(Filter):
                         if href.startswith('//'):
                             href = 'https:' + href
                         href = urllib.parse.unquote(href)
-                        href = re.sub('"', '%22', href)
+                        href = re.sub(r'(["“”])', lambda m: urllib.parse.quote(m.group(0)), href)
 
                         token['data'][attr] = href
             yield token
