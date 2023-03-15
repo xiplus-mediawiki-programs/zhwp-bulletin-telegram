@@ -208,3 +208,6 @@ for message in old_message:
             cfg['database']['table_prefix']),
         (mid))
     db.commit()
+
+cur.close()
+db.close()
