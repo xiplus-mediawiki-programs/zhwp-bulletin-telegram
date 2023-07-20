@@ -1,6 +1,6 @@
 cfg = {
     'url': 'https://zh.wikipedia.org/w/index.php?title=Template:Bulletin/ajax&action=render&uselang=zh-tw',
-    'hide_bulletin_regex': r'提名維基獎勵|移動請求正在討論',
+    'hide_bulletin_regex': r'提名維基獎勵|頁面需維基化',
     'telegram': {
         'token': '',
         'chats': {
